@@ -1,4 +1,4 @@
-# fcmb-api-client
+# polaris-api-client
 
 [![Latest Stable Version](https://img.shields.io/github/v/release/brokeyourbike/fcmb-api-client-php)](https://github.com/brokeyourbike/fcmb-api-client-php/releases)
 [![Total Downloads](https://poser.pugx.org/brokeyourbike/fcmb-api-client/downloads)](https://packagist.org/packages/brokeyourbike/fcmb-api-client)
@@ -13,14 +13,14 @@ Polaris Bank API Client for PHP
 ## Installation
 
 ```bash
-composer require brokeyourbike/polaris-api-client
+composer require dilas/polaris-api-client
 ```
 
 ## Usage
 
 ```php
-use BrokeYourBike\PolarisBank\Client;
-use BrokeYourBike\PolarisBank\Interfaces\ConfigInterface;
+use Dilas\PolarisBank\Client;
+use Dilas\PolarisBank\Interfaces\ConfigInterface;
 
 assert($config instanceof ConfigInterface);
 assert($httpClient instanceof \GuzzleHttp\ClientInterface);
