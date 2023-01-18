@@ -42,10 +42,19 @@
         "mockery/mockery": "^1.4",
         "nesbot/carbon": "^2"
     },
-    "version": "0.3.4",
+    
     "config": {
         "allow-plugins": {
             "bamarni/composer-bin-plugin": true
         }
-    }
+    },
+    "prefer-stable": true,
+    "repositories": {
+        "packagist.org": false,
+        "private-packagist": {
+            "type": "composer",
+            "url": "https://repo.packagist.com/glocurrency/"
+        }
+    },
+    "version": "0.3.4"
 }
