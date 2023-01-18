@@ -43,12 +43,11 @@
         "nesbot/carbon": "^2"
     },
     "prefer-stable": true,
-    "repositories": {
-        "packagist.org": false,
-        "private-packagist": {
-            "type": "composer",
-            "url": "https://repo.packagist.com/glocurrency/"
+   
+    "version": "0.3.1",
+    "config": {
+        "allow-plugins": {
+            "bamarni/composer-bin-plugin": true
         }
-    },
-    "version": "0.3.1"
+    }
 }
