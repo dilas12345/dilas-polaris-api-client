@@ -6,7 +6,7 @@ use Spatie\DataTransferObject\Attributes\MapFrom;
 use BrokeYourBike\DataTransferObject\JsonResponse;
 
 /**
- * @author Che Dilad Yusuph <lovetechnigeria.com.ng>
+ * @author Che Dilas Yusuph <lovetechnigeria.com.ng>
  */
 
  class TransactionResponse extends JsonResponse
