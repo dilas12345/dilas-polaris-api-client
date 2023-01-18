@@ -42,12 +42,6 @@
         "mockery/mockery": "^1.4",
         "nesbot/carbon": "^2"
     },
-    
-    "config": {
-        "allow-plugins": {
-            "bamarni/composer-bin-plugin": true
-        }
-    },
     "prefer-stable": true,
     "repositories": {
         "packagist.org": false,
