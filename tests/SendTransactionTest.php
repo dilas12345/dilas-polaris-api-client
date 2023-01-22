@@ -19,8 +19,8 @@ use Dilas\PolarisBank\Client;
  */
 class SendTransactionTest extends TestCase
 {
-    private string $username = 'unique-username';
-    private string $password = 'secure-password';
+    private string $clientId = 'unique-clientId';
+    private string $clientSecret = 'secure-clientSecret';
     private SenderInterface $sender;
     private RecipientInterface $recipient;
 
@@ -97,14 +97,14 @@ class SendTransactionTest extends TestCase
         /** @var TransactionInterface $transaction */
         $this->assertInstanceOf(TransactionInterface::class, $transaction);
 
-        $secretCode = $this->prepareSecretCode($this->username, $this->password);
+        $secretCode = $this->prepareSecretCode($this->clientId, $this->clientSecret);
 
-        $requestId = $this->username . Carbon::now()->format('YmdHis') . sprintf('%04d', $transaction->getRequestSuffix());
+        $requestId = $this->clientId . Carbon::now()->format('YmdHis') . sprintf('%04d', $transaction->getRequestSuffix());
 
         $mockedConfig = $this->getMockBuilder(ConfigInterface::class)->getMock();
         $mockedConfig->method('getUrl')->willReturn('https://api.example/');
-        $mockedConfig->method('getUsername')->willReturn($this->username);
-        $mockedConfig->method('getPassword')->willReturn($this->password);
+        $mockedConfig->method('getClientId')->willReturn($this->clientId);
+        $mockedConfig->method('getClientSecret')->willReturn($this->clientSecret);
 
         $mockedResponse = $this->getMockBuilder(ResponseInterface::class)->getMock();
         $mockedResponse->method('getStatusCode')->willReturn(200);
@@ -125,7 +125,7 @@ class SendTransactionTest extends TestCase
             [
                 \GuzzleHttp\RequestOptions::HEADERS => [
                     'Accept' => 'application/json',
-                    'API_KEY' => $this->username,
+                    'API_KEY' => $this->clientId,
                     'SECRET_CODE' => (string) $secretCode,
                 ],
                 \GuzzleHttp\RequestOptions::JSON => [

@@ -17,8 +17,8 @@ use Dilas\PolarisBank\Client;
 
  class GetTransactionStatusTest extends TestCase
  {
-     private string $username = 'unique-username';
-     private string $password = 'secure-password';
+     private string $clientId = 'client-id';
+     private string $clientSecret = 'client-secret';
      private string $reference = 'REF-123';
  
      protected function setUp(): void
@@ -38,12 +38,12 @@ use Dilas\PolarisBank\Client;
          /** @var TransactionInterface $transaction */
          $this->assertInstanceOf(TransactionInterface::class, $transaction);
  
-         $secretCode = $this->prepareSecretCode($this->username, $this->password);
+         $secretCode = $this->prepareSecretCode($this->clientId, $this->clientSecret);
  
          $mockedConfig = $this->getMockBuilder(ConfigInterface::class)->getMock();
          $mockedConfig->method('getUrl')->willReturn('https://api.example/');
-         $mockedConfig->method('getUsername')->willReturn($this->username);
-         $mockedConfig->method('getPassword')->willReturn($this->password);
+         $mockedConfig->method('getClientId')->willReturn($this->clientId);
+         $mockedConfig->method('getClientSecret')->willReturn($this->clientSecret);
  
          $mockedResponse = $this->getMockBuilder(ResponseInterface::class)->getMock();
          $mockedResponse->method('getStatusCode')->willReturn(200);
@@ -64,7 +64,7 @@ use Dilas\PolarisBank\Client;
              [
                  \GuzzleHttp\RequestOptions::HEADERS => [
                      'Accept' => 'application/json',
-                     'API_KEY' => $this->username,
+                     'API_KEY' => $this->clientId,
                      'SECRET_CODE' => (string) $secretCode,
                  ],
                  \GuzzleHttp\RequestOptions::QUERY => [

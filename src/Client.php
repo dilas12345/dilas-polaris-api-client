@@ -124,7 +124,7 @@ class Client implements HttpClientInterface, HasSourceModelInterface
         $options = [
             \GuzzleHttp\RequestOptions::HEADERS => [
                 'Accept' => 'application/json',
-                'API_KEY' => $this->config->getUsername(),
+                'API_KEY' => $this->config->getClientId(),
                 'SECRET_CODE' => $this->prepareSecretCode(),
             ],
             $option => $data,
@@ -141,9 +141,9 @@ class Client implements HttpClientInterface, HasSourceModelInterface
     private function prepareSecretCode(): string
     {
         $secretCodeData = [
-            $this->config->getUsername(),
+            $this->config->getClientId(),
             Carbon::now()->format('Ymd'),
-            $this->config->getPassword(),
+            $this->config->getClientSecret(),
         ];
 
         return hash('sha256', implode('', $secretCodeData), false);
@@ -151,7 +151,7 @@ class Client implements HttpClientInterface, HasSourceModelInterface
 
     private function prepareRequestId(TransactionInterface $transaction): string
     {
-        return $this->config->getUsername() .
+        return $this->config->getClientId() .
             Carbon::now()->format('YmdHis') .
             sprintf('%04d', $transaction->getRequestSuffix());
     }
