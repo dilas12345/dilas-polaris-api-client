@@ -7,88 +7,79 @@ namespace Dilas\PolarisBank\Enums;
  */
 enum ErrorCodeEnum: string
 {
+    
     /**
-     * Paid.
+     * No error.
      */
-    case PAID = '00';
+    case NO_ERROR = '0';
 
     /**
-     * Invalid Account.
+     * Unauthorized access.
      */
-    case INVALID_ACCOUNT = '01';
+    case UNAUTHORIZED = '10';
 
     /**
-     * Transaction Not Permitted.
+     * Repeated request detected. Change audit Id.
      */
-    case NOT_PERMITTED = '02';
+    case DUPLICATE_REQUEST = '11';
 
     /**
-     * Transaction Limit Exceeded.
+     * No record found.
      */
-    case TRANSACTION_LIMIT = '03';
+    case NO_RECORD = '12';
 
     /**
-     * Insufficient Fund.
+     * Invalid or unregistered debit account.
      */
-    case INSUFFICIENT_FUNDS = '04';
+    case INVALID_DEBIT_ACCOUNT = '13';
 
     /**
-     * Duplicate Tranmission.
+     * Reconfirm beneficiary account. Retry or contact support.
      */
-    case DUPLICATE_TRANSACTION = '09';
+    case RECONFIRM_BENEFICIARY_ACCOUNT = '14';
 
     /**
-     * Invalid Beneficiary.
+     * Unable to process request. Retry or contact support.
      */
-    case INVALID_RECIPIENT = '10';
+    case UNABLE_TO_PROCESS_REQUEST = '15';
 
     /**
-     * Authentication Failed.
+     * Beneficiary account not permitted.
      */
-    case AUTH_FAILED = '36';
+    case BENEFICIARY_ACCOUNT_NO_PERMITTED = '16';
 
     /**
-     * System Exception.
+     * Source account insufficiently funded.
      */
-    case SYSTEM_EXCEPTION = '47';
+    case INSUFFICIENT_FUNDS = '17';
 
     /**
-     * System Malfunction.
+     * Invalid account number.
      */
-    case SYSTEM_MALFUNCTION = '48';
+    case INVALID_ACCOUNT_NUMBER = '18';
 
     /**
-     * Request In Progress.
+     * Unable to process on NIBSS.
      */
-    case IN_PROGRESS = '60';
+    case UNABLE_TO_PROCESS_ON_NIBSS = '19';
 
     /**
-     * Account Name Mismatch.
+     * Unable to debit account. Check balance before retry.
      */
-    case NAME_MISMATCH = '61';
+    case UNABLE_TO_DEBIT = '20';
 
     /**
-     * Invalid Pin Number.
+     * Invalid or unregistered credit account.
      */
-    case INVALID_PIN = '62';
+    case INVALID_CREDIT_ACCOUNT = '21';
 
     /**
-     * Invalid Bank Code.
+     * Declined - Transaction not permitted. Confirm request or contact support.
      */
-    case INVALID_BANK_CODE = '63';
+    case NOT_PERMITTED = '24';
 
     /**
-     * Invalid Bank.
+     * An error occured while processing your request, Please try again.
      */
-    case INVALID_BANK = '64';
-
-    /**
-     * Account does not exist.
-     */
-    case ACCOUNT_NOT_FOUND = '65';
-
-    /**
-     * Account status invalid.
-     */
-    case INVALID_ACCOUNT_STATUS = '66';
+    case ERROR_WHILE_PROCESSIN_TRANSACTION = '38';
 }

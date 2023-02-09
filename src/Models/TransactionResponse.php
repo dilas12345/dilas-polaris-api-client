@@ -11,19 +11,19 @@ use BrokeYourBike\DataTransferObject\JsonResponse;
 
  class TransactionResponse extends JsonResponse
  {
-     #[MapFrom('Status')]
-     public string $status;
- 
-     #[MapFrom('ResponseCode')]
-     public string $responseCode;
- 
-     #[MapFrom('ResponseMessage')]
-     public string $responseMessage;
- 
-     #[MapFrom('Pin')]
-     public ?string $pin;
- 
-     #[MapFrom('AccountNumber')]
-     public ?string $accountNumber;
+    public string $message;
+    public ?bool $success;
+    public ?string $errorCode;
+    public ?string $statusCode;
+    public ?string $activityId;
+
+    #[MapFrom('payment.transactionId')]
+    public ?string $transactionId;
+
+    #[MapFrom('payment.status')]
+    public ?string $transactionStatus;
+
+    #[MapFrom('payment.information')]
+    public ?string $transactionInformation;
  }
  
