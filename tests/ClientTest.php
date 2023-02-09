@@ -1,13 +1,17 @@
 <?php
 
+// Copyright (C) 2021 Che Dilas Yusuph <josephdilas@lovetechnigeria.com.ng>.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+
 namespace Dilas\PolarisBank\Tests;
 
-use PHPUnit\Framework\TestCase;
 use BrokeYourBike\ResolveUri\ResolveUriTrait;
 use BrokeYourBike\HttpClient\HttpClientTrait;
 use BrokeYourBike\HttpClient\HttpClientInterface;
 use BrokeYourBike\HasSourceModel\HasSourceModelTrait;
-use BrokeYourBike\HasSourceModel\HasSourceModelInterface;
 use Dilas\PolarisBank\Interfaces\ConfigInterface;
 use Dilas\PolarisBank\Client;
 
@@ -17,7 +21,7 @@ use Dilas\PolarisBank\Client;
 class ClientTest extends TestCase
 {
     /** @test */
-    public function it_implements_http_client_interface(): void
+    public function it_implemets_http_client_interface(): void
     {
         /** @var ConfigInterface */
         $mockedConfig = $this->getMockBuilder(ConfigInterface::class)->getMock();
@@ -25,24 +29,14 @@ class ClientTest extends TestCase
         /** @var \GuzzleHttp\ClientInterface */
         $mockedHttpClient = $this->getMockBuilder(\GuzzleHttp\ClientInterface::class)->getMock();
 
-        $api = new Client($mockedConfig, $mockedHttpClient);
+        /** @var \Psr\SimpleCache\CacheInterface */
+        $mockedCache = $this->getMockBuilder(\Psr\SimpleCache\CacheInterface::class)->getMock();
+
+        $api = new Client($mockedConfig, $mockedHttpClient, $mockedCache);
 
         $this->assertInstanceOf(HttpClientInterface::class, $api);
         $this->assertSame($mockedConfig, $api->getConfig());
-    }
-
-    /** @test */
-    public function it_implements_has_source_model_interface(): void
-    {
-        /** @var ConfigInterface */
-        $mockedConfig = $this->getMockBuilder(ConfigInterface::class)->getMock();
-
-        /** @var \GuzzleHttp\ClientInterface */
-        $mockedHttpClient = $this->getMockBuilder(\GuzzleHttp\ClientInterface::class)->getMock();
-
-        $api = new Client($mockedConfig, $mockedHttpClient);
-
-        $this->assertInstanceOf(HasSourceModelInterface::class, $api);
+        $this->assertSame($mockedCache, $api->getCache());
     }
 
     /** @test */

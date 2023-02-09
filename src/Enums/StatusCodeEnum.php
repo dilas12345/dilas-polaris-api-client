@@ -1,5 +1,11 @@
 <?php
 
+// Copyright (C) 2021 Che Dilas Yusuph <josephdilas@lovetechnigeria.com.ng>.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+
 namespace Dilas\PolarisBank\Enums;
 
 /**
@@ -8,27 +14,27 @@ namespace Dilas\PolarisBank\Enums;
 enum StatusCodeEnum: string
 {
     /**
-     * Transaction transmit.
+     * Transaction queued for processing.
      */
-    case TRANSMIT = 'TRANSMIT';
+    case PENDING = '0';
 
     /**
-     * Beneficiary payment in progress.
+     * Transaction completed.
      */
-    case IN_PROGRESS = 'IN_PROGRESS';
+    case SUCCESS = '1';
 
     /**
-     * Transaction paid.
+     * Still processing transaction.
      */
-    case PAID = 'PAID';
+    case PROCESSING = '2';
 
     /**
-     * Transaction has been canceled.
+     * Transaction failed - no debit or debit reversed.
      */
-    case CANCELED = 'CANCELLED';
+    case FAILED = '3';
 
     /**
-     * Transaction failed.
+     * Queued for manual reconciliation with 24 hours SLA.
      */
-    case ERROR = 'ERROR';
+    case UNKNOWN = '4';
 }

@@ -1,8 +1,12 @@
 <?php
 
-namespace Dilas\PolarisBank\Tests;
+// Copyright (C) 2021 Che Dilas Yusuph <josephdilas@lovetechnigeria.com.ng.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use Carbon\Carbon;
+namespace Dilas\PolarisBank\Tests;
 
 /**
  * @author Che Dilas Yusuph <josephdilas@lovetechnigeria.com.ng>
@@ -13,10 +17,5 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     {
         parent::tearDown();
         \Mockery::close();
-    }
-
-    protected function prepareSecretCode(string $username, string $password): string|false
-    {
-        return openssl_digest($username . Carbon::now()->format('Ymd') . $password, 'SHA256', false);
     }
 }

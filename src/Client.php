@@ -2,36 +2,40 @@
 
 namespace Dilas\PolarisBank;
 
+use Psr\SimpleCache\CacheInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\ClientInterface;
-use Carbon\Carbon;
 use BrokeYourBike\ResolveUri\ResolveUriTrait;
 use BrokeYourBike\HttpEnums\HttpMethodEnum;
 use BrokeYourBike\HttpClient\HttpClientTrait;
 use BrokeYourBike\HttpClient\HttpClientInterface;
 use BrokeYourBike\HasSourceModel\SourceModelInterface;
 use BrokeYourBike\HasSourceModel\HasSourceModelTrait;
-use BrokeYourBike\HasSourceModel\HasSourceModelInterface;
-
 use Dilas\PolarisBank\Models\TransactionResponse;
-use Dilas\PolarisBank\Interfaces\TransactionInterface;
-use Dilas\PolarisBank\Interfaces\SenderInterface;
-use Dilas\PolarisBank\Interfaces\RecipientInterface;
+use Dilas\PolarisBank\Models\FetchBankAccountNameResponse;
+use Dilas\PolarisBank\Models\FetchAuthTokenResponse;
+use Dilas\PolarisBank\Models\FetchAccountBalanceResponse;
 use Dilas\PolarisBank\Interfaces\ConfigInterface;
-use Dilas\PolarisBank\Exceptions\PrepareRequestException;
+use Dilas\PolarisBank\Interfaces\BankTransactionInterface;
 
-class Client implements HttpClientInterface, HasSourceModelInterface
+/**
+ * @author Ivan Stasiuk <ivan@stasi.uk>
+ */
+class Client implements HttpClientInterface
 {
     use HttpClientTrait;
     use ResolveUriTrait;
     use HasSourceModelTrait;
 
     private ConfigInterface $config;
+    private CacheInterface $cache;
+    private int $ttlMarginInSeconds = 60;
 
-    public function __construct(ConfigInterface $config, ClientInterface $httpClient)
+    public function __construct(ConfigInterface $config, ClientInterface $httpClient, CacheInterface $cache)
     {
         $this->config = $config;
         $this->httpClient = $httpClient;
+        $this->cache = $cache;
     }
 
     public function getConfig(): ConfigInterface
@@ -39,71 +43,128 @@ class Client implements HttpClientInterface, HasSourceModelInterface
         return $this->config;
     }
 
-    public function sendTransaction(TransactionInterface $transaction): TransactionResponse
+    public function getCache(): CacheInterface
     {
-        $sender = $transaction->getSender();
-        $recipient = $transaction->getRecipient();
+        return $this->cache;
+    }
 
-        if (!$sender instanceof SenderInterface) {
-            throw PrepareRequestException::noSender($transaction);
+    public function authTokenCacheKey(): string
+    {
+        return get_class($this) . ':authToken:';
+    }
+
+    public function getAuthToken(): string
+    {
+        if ($this->cache->has($this->authTokenCacheKey())) {
+            $cachedToken = $this->cache->get($this->authTokenCacheKey());
+            if (is_string($cachedToken)) {
+                return $cachedToken;
+            }
         }
 
-        if (!$recipient instanceof RecipientInterface) {
-            throw PrepareRequestException::noRecipient($transaction);
-        }
+        $response = $this->fetchAuthTokenRaw();
 
-        if ($transaction instanceof SourceModelInterface) {
-            $this->setSourceModel($transaction);
-        }
+        $this->cache->set(
+            $this->authTokenCacheKey(),
+            $response->accessToken,
+            (int) $response->expiresIn - $this->ttlMarginInSeconds
+        );
 
-        $response = $this->performRequest(HttpMethodEnum::POST, 'payment/deposit', [
-            'RequestID' => $this->prepareRequestId($transaction),
-            'Pin' => $transaction->getReference(),
-            'DateTimeLocal' => (string) Carbon::now()->toISOString(),
-            'DateTimeUTC' => (string) Carbon::now()->setTimezone('UTC')->toISOString(),
-            'TransactionDate' => $transaction->getDate()->toISOString(),
-            'SendAmount' => $transaction->getSendAmount(),
-            'SendAmountCurrency' => $transaction->getSendCurrencyCode(),
-            'ReceiveAmount' => $transaction->getReceiveAmount(),
-            'ReceiveAmountCurrency' => $transaction->getReceiveCurrencyCode(),
-            'AccountNumber' => $transaction->getAccountNumber(),
-            'BankCode' => $transaction->getBankCode(),
+        return $response->accessToken;
+    }
 
-            'SenderFirstName' => $sender->getFirstName(),
-            'SenderMiddleName' => $sender->getMiddleName(),
-            'SenderLastName' => $sender->getLastName(),
-            'SenderAddress' => $sender->getAddress() ?? '-',
-            'SenderCity' => $sender->getCity() ?? '-',
-            'SenderState' => $sender->getState() ?? '-',
-            'SenderCountry' => $sender->getCountryCode(),
-            'SenderPhoneNo' => $sender->getPhoneNumber() ?? '-',
-            'SenderZip' => $sender->getPostalCode() ?? '-',
+    public function fetchAuthTokenRaw(): FetchAuthTokenResponse
+    {
+        $options = [
+            \GuzzleHttp\RequestOptions::HEADERS => [
+                'Accept' => 'application/json',
+            ],
+            \GuzzleHttp\RequestOptions::FORM_PARAMS => [
+                'grant_type' => 'client_credentials',
+                'resource' => $this->config->getResourceId(),
+                'client_id' => $this->config->getClientId(),
+                'client_secret' => $this->config->getClientSecret(),
+            ],
+        ];
 
-            'ReceiverFirstName' => $recipient->getFirstName(),
-            'ReceiverMiddleName' => $recipient->getMiddleName(),
-            'ReceiverLastName' => $recipient->getLastName(),
-            'ReceiverAddress' => $recipient->getAddress() ?? '-',
-            'ReceiverCity' => $recipient->getCity() ?? '-',
-            'ReceiverState' => $recipient->getState() ?? '-',
-            'ReceiverCountry' => $recipient->getCountryCode(),
-            'ReceiverPhoneNo' => $recipient->getPhoneNumber() ?? '-',
-            'ReceiverZip' => $recipient->getPostalCode() ?? '-',
+        $response = $this->httpClient->request(
+            HttpMethodEnum::POST->value,
+            $this->config->getAuthUrl(),
+            $options
+        );
+
+        return new FetchAuthTokenResponse($response);
+    }
+
+    public function fetchAccountBalanceRaw(string $auditId, string $accountNumber): FetchAccountBalanceResponse
+    {
+        $response = $this->performRequest(HttpMethodEnum::POST, 'getAccountBalance', [
+            'accountNumber' => $accountNumber,
+            'auditId' => $auditId,
+            'appId' => $this->config->getAppId(),
+        ]);
+
+        return new FetchAccountBalanceResponse($response);
+    }
+
+    public function fetchDomesticBankAccountNameRaw(string $auditId, string $accountNumber): FetchBankAccountNameResponse
+    {
+        $response = $this->performRequest(HttpMethodEnum::POST, 'getBankAccountName', [
+            'accountNumber' => $accountNumber,
+            'auditId' => $auditId,
+            'appId' => $this->config->getAppId(),
+        ]);
+
+        return new FetchBankAccountNameResponse($response);
+    }
+
+    public function fetchDomesticTransactionStatusRaw(string $auditId, string $reference): TransactionResponse
+    {
+        $response = $this->performRequest(HttpMethodEnum::POST, 'getBankFTStatus', [
+            'paymentAuditId' => $reference,
+            'auditId' => $auditId,
+            'appId' => $this->config->getAppId(),
         ]);
 
         return new TransactionResponse($response);
     }
 
-    public function getTransactionStatus(TransactionInterface $transaction): TransactionResponse
+    public function sendDomesticTransaction(BankTransactionInterface $bankTransaction): TransactionResponse
     {
-        if ($transaction instanceof SourceModelInterface) {
-            $this->setSourceModel($transaction);
+        if ($bankTransaction instanceof SourceModelInterface) {
+            $this->setSourceModel($bankTransaction);
         }
 
-        $response = $this->performRequest(HttpMethodEnum::GET, 'payment/status', [
-            'pin' => $transaction->getReference(),
+        $response = $this->performRequest(HttpMethodEnum::POST, 'bankAccountFT', [
+            'debitAccount' => $bankTransaction->getDebitAccount(),
+            'beneficiaryAccount' => $bankTransaction->getRecipientAccount(),
+            'beneficiaryName' => $bankTransaction->getRecipientName(),
+            'amount' => $bankTransaction->getAmount(),
+            'currency' => $bankTransaction->getCurrencyCode(),
+            'narration' => $bankTransaction->getDescription(),
+            'auditId' => $bankTransaction->getReference(),
+            'appId' => $this->config->getAppId(),
         ]);
 
         return new TransactionResponse($response);
+    }
+
+    public function sendOtherBankTransaction(BankTransactionInterface $bankTransaction): ResponseInterface
+    {
+        if ($bankTransaction instanceof SourceModelInterface) {
+            $this->setSourceModel($bankTransaction);
+        }
+
+        return $this->performRequest(HttpMethodEnum::POST, 'USDOtherBankFT', [
+            'AuditId' => $bankTransaction->getReference(),
+            'AppId' => $this->config->getAppId(),
+            'DebitAccountNumber' => $bankTransaction->getDebitAccount(),
+            'BeneficiaryAccount' => $bankTransaction->getRecipientAccount(),
+            'BeneficiaryName' => $bankTransaction->getRecipientName(),
+            'Amount' => $bankTransaction->getAmount(),
+            'Bank' => $bankTransaction->getBankCode(),
+            'Narration' => $bankTransaction->getDescription(),
+        ]);
     }
 
     /**
@@ -111,23 +172,16 @@ class Client implements HttpClientInterface, HasSourceModelInterface
      * @param string $uri
      * @param array<mixed> $data
      * @return ResponseInterface
-     *
-     * @throws \Exception
      */
     private function performRequest(HttpMethodEnum $method, string $uri, array $data): ResponseInterface
     {
-        $option = match($method) {
-            HttpMethodEnum::GET => \GuzzleHttp\RequestOptions::QUERY,
-            default => \GuzzleHttp\RequestOptions::JSON,
-        };
-
         $options = [
             \GuzzleHttp\RequestOptions::HEADERS => [
                 'Accept' => 'application/json',
-                'API_KEY' => $this->config->getClientId(),
-                'SECRET_CODE' => $this->prepareSecretCode(),
+                'Authorization' => "Bearer {$this->getAuthToken()}",
+                'Ocp-Apim-Subscription-Key' => $this->config->getSubscriptionKey(),
             ],
-            $option => $data,
+            \GuzzleHttp\RequestOptions::JSON => $data,
         ];
 
         if ($this->getSourceModel()) {
@@ -136,23 +190,5 @@ class Client implements HttpClientInterface, HasSourceModelInterface
 
         $uri = (string) $this->resolveUriFor($this->config->getUrl(), $uri);
         return $this->httpClient->request($method->value, $uri, $options);
-    }
-
-    private function prepareSecretCode(): string
-    {
-        $secretCodeData = [
-            $this->config->getClientId(),
-            Carbon::now()->format('Ymd'),
-            $this->config->getClientSecret(),
-        ];
-
-        return hash('sha256', implode('', $secretCodeData), false);
-    }
-
-    private function prepareRequestId(TransactionInterface $transaction): string
-    {
-        return $this->config->getClientId() .
-            Carbon::now()->format('YmdHis') .
-            sprintf('%04d', $transaction->getRequestSuffix());
     }
 }
