@@ -10,7 +10,7 @@ namespace Dilas\PolarisBank\Tests;
 
 use Psr\SimpleCache\CacheInterface;
 use Psr\Http\Message\ResponseInterface;
-use Dilad\PolarisBank\Models\TransactionResponse;
+use Dilas\PolarisBank\Models\TransactionResponse;
 use Dilas\PolarisBank\Interfaces\ConfigInterface;
 use Dilas\PolarisBank\Client;
 
